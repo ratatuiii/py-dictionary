@@ -25,27 +25,32 @@ class Dictionary:
 
         for item in old_table:
             if item is not None:
-                key, value = item
+                key, _, value = item
                 self[key] = value
 
     def __len__(self) -> int:
         return self.size
 
     def __getitem__(self, key: Any) -> Any:
-        index = self.find_index(key)
+        key_hash = hash(key)
+        index = key_hash % self.capacity
 
         while self.table[index] is not None:
-            if self.table[index][0] == key:
-                return self.table[index][1]
+            stored_key, stored_hash, stored_value = self.table[index]
+
+            if stored_hash == key_hash and stored_key == key:
+                return stored_value
+
             index = (index + 1) % self.capacity
 
-        raise KeyError
+        raise KeyError(f"Key '{key}' not found")
 
     def __setitem__(self, key: Any, value: Any) -> None:
         if self.size >= self.capacity * self.load_factor:
             self.resize()
 
-        index = self.find_index(key)
+        key_hash = hash(key)
+        index = key_hash % self.capacity
 
         while self.table[index] is not None:
             if self.table[index][0] == key:
@@ -55,4 +60,4 @@ class Dictionary:
         if self.table[index] is None:
             self.size += 1
 
-        self.table[index] = (key, value)
+        self.table[index] = (key, key_hash, value)
